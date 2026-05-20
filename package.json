@@ -1,7 +1,7 @@
 {
     "name": "filepond-extension-pintura-transform",
     "description": "Pintura extension for FilePond.",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "main": "index.js",
     "author": "Rik Schennink",
     "funding": "https://filepond.com/funding",
@@ -12,6 +12,6 @@
     },
     "dependencies": {
         "@pqina/pintura": "^8.x",
-        "filepond": "^5.x"
+        "filepond": "^5.0.0-beta.40"
     }
 }
