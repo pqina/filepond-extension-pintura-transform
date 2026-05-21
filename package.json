@@ -1,17 +1,33 @@
 {
     "name": "filepond-extension-pintura-transform",
     "description": "Pintura extension for FilePond.",
-    "version": "0.0.2",
-    "main": "index.js",
+    "version": "0.0.3",
     "author": "Rik Schennink",
-    "funding": "https://filepond.com/funding",
     "license": "MIT",
     "type": "module",
+    "main": "./dist/index.cjs",
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "require": "./dist/index.cjs"
+        }
+    },
+    "files": [
+        "dist"
+    ],
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1"
+        "build": "tsdown",
+        "prepublishOnly": "npm run build"
     },
     "dependencies": {
         "@pqina/pintura": "^8.x",
-        "filepond": "^5.0.0-beta.40"
+        "filepond": "^5.0.0-beta.41"
+    },
+    "devDependencies": {
+        "tsdown": "^0.21.10",
+        "typescript": "^6.0.3"
     }
 }

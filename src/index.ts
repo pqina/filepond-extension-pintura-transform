@@ -5,15 +5,22 @@ import type {
     PinturaImageState,
 } from '@pqina/pintura';
 import type { TransformExtensionOptions } from 'filepond/extensions/common/createTransformExtension.js';
-import { createTransformExtension } from 'filepond';
-import { isFileEntry } from 'filepond/utils';
+import { createTransformExtension, FilePondEntry, Progress } from 'filepond';
+import { isFile, isFileEntry } from 'filepond/utils';
 
 /**
  * Custom options for the Pintura Transform extension
  */
 export interface PinturaTransformOptions extends TransformExtensionOptions {
-    loadEditor?: () => Promise<void>;
-    openEditor: (src: ImageSource) => Promise<PinturaEditor> | PinturaEditor;
+    prepare?: (
+        entry: FilePondEntry,
+        options: { onprogress: (e: Progress) => void; signal: AbortSignal }
+    ) => Promise<void>;
+    transform: (
+        src: ImageSource,
+        entry: FilePondEntry,
+        options: { onprogress: (e: Progress) => void; signal: AbortSignal }
+    ) => Promise<File | PinturaEditor> | File | PinturaEditor;
 }
 
 /**
@@ -35,24 +42,23 @@ export const PinturaTransform = createTransformExtension({
         actionTransform: 'editMedia',
     } as PinturaTransformOptions,
     factory: ({ extensionName, props }) => ({
-        // The `canTransformEntry` is called to test if we can transform an image
-        // Here we use a cheap, but not always accurate, method to test if an entry can be transformed
+        // The `canTransformEntry` is called to test if we can transform an image, here we use a cheap, but not always accurate, method to test if an entry can be transformed
         canTransformEntry: (entry) => {
             return !!(isFileEntry(entry) && entry.type && /video|image/.test(entry.type));
         },
 
         // Use the `prepareTransformEntry` hook to preload dependencies
         prepareTransformEntry: async (entry, { onprogress, signal }) => {
-            const { loadEditor } = props;
-            await loadEditor?.();
+            const { prepare } = props;
+            await prepare?.(entry, { onprogress, signal });
         },
 
         // The `transformEntry` function is called when we're ready to transform an entry
         transformEntry: async (entry, { onprogress, signal }) => {
             // open the editor
-            const { openEditor } = props;
+            const { transform } = props;
 
-            if (!openEditor) {
+            if (!open) {
                 throw new Error('openEditor function missing');
             }
 
@@ -65,23 +71,36 @@ export const PinturaTransform = createTransformExtension({
             // Determine which file to edit
             const src = input || file;
 
-            // Open the file in the editor
-            const editor = await openEditor(src);
+            // Open the file in the editor, expects a File or a Pintura instance in return
+            const transformResult = await transform(src, entry, { onprogress, signal });
+            if (!transformResult) {
+                throw new Error(`Transform didn't return a result`);
+            }
+
+            // file returned, let's update the file item
+            if (isFile(transformResult)) {
+                return {
+                    file: transformResult,
+                };
+            }
+
+            // editor instance returned, let's wait for the manual editing to complete
+            const pinturaInstance = transformResult;
 
             // Restore any previously stored history state
             if (history.length) {
-                editor.on('load', () => {
-                    editor.history.write(history.pop());
+                pinturaInstance.on('load', () => {
+                    pinturaInstance.history.write(history.pop());
                 });
             }
 
-            // Returns the edited file and its image state
-            const res = await process(editor);
-
             // clean up the editor
-            editor.destroy();
+            pinturaInstance.destroy();
 
-            // User closed the editor
+            // Returns the edited file and its image state
+            const res = await process(transformResult);
+
+            // User closed the editor, no changes
             if (!res) {
                 return;
             }
