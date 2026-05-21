@@ -1,17 +1,17 @@
 {
     "name": "filepond-extension-pintura-transform",
     "description": "Pintura extension for FilePond.",
-    "version": "0.0.3",
+    "version": "0.0.4",
     "author": "Rik Schennink",
     "license": "MIT",
     "type": "module",
     "main": "./dist/index.cjs",
-    "module": "./dist/index.js",
+    "module": "./dist/index.mjs",
     "types": "./dist/index.d.ts",
     "exports": {
         ".": {
             "types": "./dist/index.d.ts",
-            "import": "./dist/index.js",
+            "import": "./dist/index.mjs",
             "require": "./dist/index.cjs"
         }
     },

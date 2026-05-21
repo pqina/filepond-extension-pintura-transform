@@ -58,8 +58,8 @@ export const PinturaTransform = createTransformExtension({
             // open the editor
             const { transform } = props;
 
-            if (!open) {
-                throw new Error('openEditor function missing');
+            if (!transform) {
+                throw new Error('Transform function missing');
             }
 
             // Get props
@@ -94,11 +94,11 @@ export const PinturaTransform = createTransformExtension({
                 });
             }
 
-            // clean up the editor
-            pinturaInstance.destroy();
-
             // Returns the edited file and its image state
             const res = await process(transformResult);
+
+            // clean up the editor
+            pinturaInstance.destroy();
 
             // User closed the editor, no changes
             if (!res) {
